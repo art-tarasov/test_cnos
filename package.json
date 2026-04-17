@@ -1,0 +1,7 @@
+{
+  "name": "myquiz",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ]
+}
