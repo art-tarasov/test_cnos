@@ -30,7 +30,7 @@ export class Quiz {
   @Column({ type: 'enum', enum: QuizStatus, default: QuizStatus.DRAFT })
   status!: QuizStatus;
 
-  @Column({ name: 'author_id' })
+  @Column({ name: 'author_id', type: 'uuid' })
   authorId!: string;
 
   @CreateDateColumn({ name: 'created_at' })

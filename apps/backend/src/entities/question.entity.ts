@@ -25,7 +25,7 @@ export class Question {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ name: 'quiz_id' })
+  @Column({ name: 'quiz_id', type: 'uuid' })
   quizId!: string;
 
   @Column({ type: 'enum', enum: QuestionType })

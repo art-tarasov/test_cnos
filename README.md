@@ -26,6 +26,8 @@ From the repo root:
 npm install
 ```
 
+This installs dependencies for all workspaces (backend and frontend) via npm workspaces.
+
 ## Running Locally
 
 ### Backend

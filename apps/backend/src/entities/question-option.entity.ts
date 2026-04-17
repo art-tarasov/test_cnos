@@ -14,7 +14,7 @@ export class QuestionOption {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ name: 'question_id' })
+  @Column({ name: 'question_id', type: 'uuid' })
   questionId!: string;
 
   @Column({ type: 'jsonb' })

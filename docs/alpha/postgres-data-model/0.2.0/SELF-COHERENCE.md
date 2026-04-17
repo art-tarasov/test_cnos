@@ -16,7 +16,7 @@
 |----|-------|----------|
 | AC1 | DB connection via env vars; `.env.example` documents all required vars; no hard-coded params | `apps/backend/.env.example` lists DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME; `database.config.ts` reads from `process.env` only; throws on missing vars |
 | AC2 | TypeORM integrated; startup fails clearly on missing vars or DB unreachable | `DatabaseModule` calls `loadDatabaseConfig()` in `useFactory` — throws `Error` with message listing missing vars; `retryAttempts: 3` limits silent hang to ≤9s |
-| AC3 | All six entities defined with correct schema | Six entity files in `src/entities/`; `body` fields are `{ type: 'jsonb' }`; `QuestionAnswer` uses `@PrimaryColumn` × 2 with `@JoinColumn` FK constraints on both |
+| AC3 | All six entities defined with correct schema | Six entity files in `src/entities/`; `body` fields are `{ type: 'jsonb' }`; FK `@Column` decorators carry `type: 'uuid'` (consistent with `@PrimaryColumn` in `QuestionAnswer`); `QuestionAnswer` uses `@PrimaryColumn` × 2 with `@JoinColumn` FK constraints on both |
 | AC4 | Migration runnable via `npm run migration:run` | `src/migrations/1776384000000-InitSchema.ts` implements `MigrationInterface`; `data-source.ts` exports `AppDataSource`; `package.json` `migration:run` script uses `typeorm-ts-node-commonjs` |
 | AC5 | `GET /health` returns `{status,db}` | `HealthController` calls `DatabaseHealthService.isHealthy()`; returns `{status:'ok',db:'ok'}` or `{status:'degraded',db:'error'}` |
 | AC6 | Unit tests: DB health mock + entity enum validation | `database-health.service.spec.ts` mocks DataSource; `entities.spec.ts` asserts enum string values and QuestionAnswer field independence; `health.controller.spec.ts` tests both paths |

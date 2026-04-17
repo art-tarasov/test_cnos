@@ -6,7 +6,7 @@ export class ExpectedAnswer {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ name: 'question_id' })
+  @Column({ name: 'question_id', type: 'uuid' })
   questionId!: string;
 
   @Column({ type: 'jsonb' })
