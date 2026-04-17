@@ -1,28 +1,35 @@
 {
   "name": "@myquiz/backend",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "build": "nest build",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "test": "jest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "migration:run": "typeorm-ts-node-commonjs -d data-source.ts migration:run",
+    "migration:revert": "typeorm-ts-node-commonjs -d data-source.ts migration:revert"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
     "@nestjs/core": "^10.0.0",
     "@nestjs/platform-express": "^10.0.0",
+    "@nestjs/typeorm": "^10.0.0",
+    "pg": "^8.11.3",
     "reflect-metadata": "^0.1.13",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "typeorm": "^0.3.17"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
     "@nestjs/testing": "^10.0.0",
     "@types/jest": "^29.5.2",
     "@types/node": "^20.3.1",
+    "@types/pg": "^8.10.2",
     "jest": "^29.5.0",
     "ts-jest": "^29.1.0",
+    "ts-node": "^10.9.1",
     "typescript": "^5.1.3"
   },
   "jest": {
@@ -32,6 +39,7 @@
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
+    "setupFiles": ["reflect-metadata"],
     "testEnvironment": "node"
   }
 }
