@@ -1,13 +1,24 @@
 import { Controller, Get } from '@nestjs/common';
+import { DatabaseHealthService } from '../database/database-health.service';
+
+type ServiceStatus = 'ok' | 'degraded';
+type DbStatus = 'ok' | 'error';
 
 interface HealthResponse {
-  status: 'ok';
+  status: ServiceStatus;
+  db: DbStatus;
 }
 
 @Controller('health')
 export class HealthController {
+  constructor(private readonly dbHealth: DatabaseHealthService) {}
+
   @Get()
-  check(): HealthResponse {
-    return { status: 'ok' };
+  async check(): Promise<HealthResponse> {
+    const dbHealthy = await this.dbHealth.isHealthy();
+    return {
+      status: dbHealthy ? 'ok' : 'degraded',
+      db: dbHealthy ? 'ok' : 'error',
+    };
   }
 }

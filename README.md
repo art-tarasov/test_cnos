@@ -16,6 +16,7 @@ docs/         Cycle snapshots and process artifacts
 
 - Node.js 20+
 - npm 9+ (workspace support required)
+- PostgreSQL 13+ (for backend)
 
 ## Install
 
@@ -25,14 +26,29 @@ From the repo root:
 npm install
 ```
 
-This installs dependencies for both apps via npm workspaces.
+This installs dependencies for all workspaces (backend and frontend) via npm workspaces.
 
 ## Running Locally
 
 ### Backend
 
+Copy and fill in the environment file:
+
+```bash
+cp apps/backend/.env.example apps/backend/.env
+# edit apps/backend/.env with your local Postgres credentials
+```
+
+Run database migrations (requires a running Postgres instance):
+
 ```bash
 cd apps/backend
+npm run migration:run
+```
+
+Start the server:
+
+```bash
 npm run start:dev
 ```
 
@@ -43,7 +59,8 @@ Health check:
 
 ```bash
 curl http://localhost:3000/health
-# {"status":"ok"}
+# {"status":"ok","db":"ok"}   ← when DB is reachable
+# {"status":"degraded","db":"error"}  ← when DB is unreachable
 ```
 
 ### Frontend
@@ -57,9 +74,13 @@ Vite starts a dev server. Open the URL shown in the terminal (default `http://lo
 
 ## TypeScript Verification
 
-Both apps use `strict: true`. Verify with:
-
 ```bash
 cd apps/backend && npx tsc --noEmit
 cd apps/frontend && npx tsc --noEmit
+```
+
+## Tests
+
+```bash
+cd apps/backend && npm test
 ```
