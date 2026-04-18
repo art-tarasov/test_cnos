@@ -8,7 +8,7 @@
 
 ## Active Skills
 - Tier 1: CDD.md, alpha/SKILL.md
-- Tier 2: coding, testing, design-principles, architecture-evolution, ship, writing, documenting, process-economics
+- Tier 2: coding, testing, design-principles, ship, writing, documenting, process-economics
 - Tier 3: eng/typescript, eng/architecture-evolution
 
 ## AC-by-AC Check
@@ -58,6 +58,13 @@
 ## Role Self-Check
 - Did α push ambiguity onto β? No — all ACs have concrete evidence in the diff.
 - Does any claim lack evidence in the diff? No — AC1–AC7 each traced to a file or test above.
+
+## Post-Patch Re-Audit (after β RC)
+
+β found two findings; both patched:
+- **F1:** Removed `architecture-evolution` from Tier 2 list (it belongs in Tier 3 only per CDD.md §4.4). AC evidence unchanged.
+- **F2:** Removed unused `let app: TestingModule` + `beforeEach` from "GET /auth/me with no token" describe block. The assertion (`denyGuard.canActivate` returns false) is preserved; dead scaffolding removed.
+- `tsc --noEmit` passes on HEAD; 18/18 tests pass. All prior AC evidence claims still hold against HEAD.
 
 ## Known Debt
 - No `class-validator` / DTO validation: `RegisterDto` and `LoginDto` are plain classes; no runtime validation of request body shape (e.g., empty email, malformed email). Future cycle should add `class-validator` + `ValidationPipe` if input hygiene is required. Filed as a known gap — not blocking auth correctness for this cycle.

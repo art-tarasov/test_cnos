@@ -93,24 +93,9 @@ describe('AuthController', () => {
   });
 
   describe('GET /auth/me with no token', () => {
-    let app: TestingModule;
-
-    beforeEach(async () => {
-      app = await Test.createTestingModule({
-        controllers: [AuthController],
-        providers: [{ provide: AuthService, useValue: mockAuthService }],
-      })
-        .overrideGuard(JwtAuthGuard)
-        .useValue(denyGuard)
-        .compile();
-    });
-
-    it('JwtAuthGuard denies when no token provided', () => {
-      // The guard returning false causes Forbidden in full HTTP context.
-      // Here we verify the guard's canActivate returns false.
-      const guardInstance = denyGuard;
+    it('JwtAuthGuard canActivate returns false when no token provided', () => {
       const mockCtx = {} as ExecutionContext;
-      expect(guardInstance.canActivate(mockCtx)).toBe(false);
+      expect(denyGuard.canActivate(mockCtx)).toBe(false);
     });
   });
 });
