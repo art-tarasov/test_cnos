@@ -1,32 +1,29 @@
 ## Outcome
 
-Coherence delta: C_Σ `A-` (`α A-`, `β A`, `γ A`) · **Level:** `L6`
+Coherence delta: C_Σ `A-` (`α A-`, `β A`, `γ A-`) · **Level:** `L6`
 
-The backend now has a persistence layer. Before this release, `app.module.ts` imported no database module, there was no ORM dependency, and every quiz feature was blocked. After this release, TypeORM is integrated with PostgreSQL, six entities in 4NF define the core quiz data model, the initial migration is runnable, and `GET /health` reports real DB connectivity status. The schema is managed exclusively via migrations (`synchronize: false`); all DB connection params flow from env vars with explicit failure on missing config.
+The backend now has a working authentication layer. Before this release, `User.passwordHash` was never written, there was no JWT infrastructure, and every endpoint requiring an authenticated identity was blocked. After this release, `POST /auth/register` and `POST /auth/login` are functional, JWT is issued on login, `JwtAuthGuard` and `@CurrentUser()` are available for future controllers, and auth config is sourced strictly from env vars with explicit failure on missing `JWT_SECRET`.
 
 ## Why it matters
 
-No quiz feature — authoring, taking, scoring — can be built without persistence. This cycle closes the P0 blocking dependency. The schema design choices (composite PK on `QuestionAnswer`, separate `ExpectedAnswer` entity, `jsonb` body fields) are explicitly scoped for extensibility without future migrations. TypeORM was selected over Prisma for first-class NestJS integration and easier `DataSource` injection in unit tests; the decision and its negative leverage are documented in `docs/alpha/postgres-data-model/0.2.0/DESIGN.md`.
+Auth is the prerequisite for all quiz features. No "create quiz," "submit answer," or "view results" endpoint can be built securely without knowing who the caller is. This cycle closes the dependency that blocked all feature work. The implementation uses standard NestJS/Passport patterns with no new architectural abstractions — the auth module slots into the existing NestJS module graph with minimal coupling.
 
 ## Added
 
-- **PostgreSQL + TypeORM integration** (#4): `DatabaseModule` connects via env vars; throws clearly on missing vars; `retryAttempts: 3` limits hang on unreachable DB.
-- **Six entities in 4NF** (#4): `User`, `Quiz`, `Question`, `QuestionOption`, `QuestionAnswer` (composite PK), `ExpectedAnswer`. All `body` fields `jsonb`. FK constraints on both `QuestionAnswer` columns.
-- **Initial migration** (#4): `1776384000000-InitSchema` — creates all tables, enums, and constraints. `npm run migration:run` from `apps/backend`.
-- **`.env.example`** (#4): Documents DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME.
-- **Health endpoint DB check** (#4): `{"status":"ok","db":"ok"}` or `{"status":"degraded","db":"error"}`.
-- **Unit tests** (#4): 8 tests, 3 suites — DB health service mock, health controller both paths, entity enum values + composite key independence.
+- **`POST /auth/register`** (#6): accepts `{ email, password }`, creates `User` with bcrypt hash (12 rounds), returns `{ id, email, role }`. Returns 409 on duplicate email.
+- **`POST /auth/login`** (#6): verifies credentials against stored hash, returns signed JWT `{ sub: userId, email, role }`. Returns 401 on invalid credentials. Error message identical for missing user and wrong password (no user enumeration).
+- **`JwtAuthGuard`** (#6): `extends AuthGuard('jwt')`. Apply with `@UseGuards(JwtAuthGuard)` on any route to require a valid JWT. Returns 401 on absent or invalid token.
+- **`@CurrentUser()` decorator** (#6): extracts `JwtPayload` (`{ sub, email, role }`) from the authenticated request. For use in future controllers.
+- **`GET /auth/me`** (#6): smoke-test for the full auth flow — protected by `JwtAuthGuard`, returns `{ id, email, role }` from the JWT payload.
+- **Auth config** (#6): `auth.config.ts` reads `JWT_SECRET` (required, throws on missing) and `JWT_EXPIRES_IN` (optional, defaults to `7d`). `.env.example` documents both vars.
+- **Unit tests** (#6): 10 new tests (18/18 total) — service (register/hash/login/invalid), controller (register/login pass-through, me with valid token, guard deny behavior).
 
 ## Validation
 
-- `apps/backend`: `npm test` → 8/8 tests passing across 3 suites
+- `apps/backend`: `npm test` → 18/18 tests passing (8 prior + 10 new)
 - `apps/backend`: `tsc --noEmit` passes (strict mode, no `any`)
-- Migration runnable against a live PostgreSQL instance via `npm run migration:run`
-- Health endpoint returns correct `{status, db}` shape in both healthy and degraded paths (unit-tested)
-- Full integration against a running DB deferred — no live DB in release environment
+- Full integration against a running application (JWT issuance and validation end-to-end) deferred — no live environment in CI
 
 ## Known Issues
 
-- Integration tests against a live DB not present (explicit non-goal per issue #4)
-- `ExpectedAnswer` validity for `short_text` questions only is documented but not DB-enforced (noted in DESIGN.md and SELF-COHERENCE.md)
-- TypeORM 0.3.x query-builder limitations noted; migrate to Prisma if query complexity grows (noted in DESIGN.md)
+- No `class-validator` / DTO validation: `RegisterDto` and `LoginDto` accept any body shape. Malformed input passes to the service layer. Future cycle should add `ValidationPipe` when input hygiene is required (explicit known debt — not blocking auth correctness).

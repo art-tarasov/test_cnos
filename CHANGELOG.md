@@ -4,8 +4,23 @@
 
 | Version | C_Σ | α | β | γ | Level | Coherence note |
 |---------|-----|---|---|---|-------|----------------|
+| 0.3.0 | A- | A- | A | A- | L6 (cycle: L6) | Auth layer added: JWT registration + login, JwtAuthGuard and @CurrentUser() for future controllers. Two findings at review (F1 C mechanical: Tier classification cross-surface conflict in SELF-COHERENCE.md; F2 B judgment: dead test setup). Both fixed in RC. γ dispatch had transposed PR/issue numbers. |
 | 0.2.0 | A- | A- | A | A | L6 (cycle: L6) | Persistence layer established: TypeORM + PostgreSQL, six entities in 4NF, initial migration, health endpoint extended. Four mechanical findings (3B, 1A) reached review — FK type annotation drift, bootstrap ordering, CLI env var consistency, README omission. |
 | 0.1.0 | A- | A- | A | A- | L6 | First application skeleton: NestJS backend + React/Vite frontend exist and are locally runnable. Monorepo workspace wiring established. PR template surface was corrected (F1: instance content in template file). |
+
+---
+
+## 0.3.0 — 2026-04-18
+
+### Added
+
+- **`POST /auth/register`** (#6): accepts `{ email, password }`, creates `User` with bcrypt hash (12 rounds), returns `{ id, email, role }`. Returns 409 on duplicate email.
+- **`POST /auth/login`** (#6): verifies credentials, returns signed JWT `{ sub: userId, email, role }`. Returns 401 on invalid credentials (message identical for missing user and wrong password — no user enumeration).
+- **`JwtAuthGuard`** (#6): `extends AuthGuard('jwt')`. Apply with `@UseGuards(JwtAuthGuard)` to require a valid JWT. Returns 401 on absent or invalid token.
+- **`@CurrentUser()` decorator** (#6): extracts `JwtPayload` from the authenticated request. Available for future controllers.
+- **`GET /auth/me`** (#6): protected endpoint; returns `{ id, email, role }` from the JWT payload.
+- **Auth config** (#6): `auth.config.ts` reads `JWT_SECRET` (required, throws on missing) and `JWT_EXPIRES_IN` (optional, defaults `7d`). `.env.example` updated with both vars.
+- **Unit tests** (#6): 10 new tests (18/18 total) — service: register/hash/login/invalid; controller: register/login pass-through, me with valid token, guard deny behavior.
 
 ---
 
