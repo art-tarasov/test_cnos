@@ -156,7 +156,7 @@ Before dispatch, verify:
 - every noun in ACs and work items is in scope
 - non-goals exist when the issue is substantial
 - Tier 3 skills are named explicitly
-- active invariants are linked and stated plainly
+- active invariants are linked and stated plainly — when ACs define state transitions, invariants name all terminal states explicitly (not inferred from transition lists)
 - related artifacts are linked or explicitly absent
 - priority is stated
 - work-shape is stated
