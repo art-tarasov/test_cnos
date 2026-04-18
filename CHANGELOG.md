@@ -4,9 +4,29 @@
 
 | Version | C_Σ | α | β | γ | Level | Coherence note |
 |---------|-----|---|---|---|-------|----------------|
+| 0.4.0 | A- | A- | A | A | L6 (cycle: L6) | Quiz authoring CRUD added: 10 endpoints (quizzes + questions + options + answer key), ownership at service layer, cascade delete via DB FK. Two findings at review (F1 C mechanical: PR body test count undercounted controller spec; F2 C judgment: published→published not blocked — AC3 terminal state not enforced). Both fixed in RC; published now terminal, 57/57 tests pass. |
 | 0.3.0 | A- | A- | A | A- | L6 (cycle: L6) | Auth layer added: JWT registration + login, JwtAuthGuard and @CurrentUser() for future controllers. Two findings at review (F1 C mechanical: Tier classification cross-surface conflict in SELF-COHERENCE.md; F2 B judgment: dead test setup). Both fixed in RC. γ dispatch had transposed PR/issue numbers. |
 | 0.2.0 | A- | A- | A | A | L6 (cycle: L6) | Persistence layer established: TypeORM + PostgreSQL, six entities in 4NF, initial migration, health endpoint extended. Four mechanical findings (3B, 1A) reached review — FK type annotation drift, bootstrap ordering, CLI env var consistency, README omission. |
 | 0.1.0 | A- | A- | A | A- | L6 | First application skeleton: NestJS backend + React/Vite frontend exist and are locally runnable. Monorepo workspace wiring established. PR template surface was corrected (F1: instance content in template file). |
+
+---
+
+## 0.4.0 — 2026-04-18
+
+### Added
+
+- **`POST /quizzes`** (#8): creates quiz with `status=draft`, `authorId` from JWT. Returns 400 for missing/blank title.
+- **`GET /quizzes/:id`** (#8): returns quiz for owner. 404 if not found, 403 if not author.
+- **`PATCH /quizzes/:id`** (#8): updates title/description/status. `draft → published` valid; published is terminal (any further status change throws 400). 403 for non-author.
+- **`DELETE /quizzes/:id`** (#8): cascades to questions/options/answers/expected-answers via DB FK `ON DELETE CASCADE`. Returns 204. 403 for non-author.
+- **`POST /quizzes/:quizId/questions`** (#8): validates type enum and required fields (body.text, position, points). 403 for non-author.
+- **`GET /quizzes/:quizId/questions`** (#8): returns questions ordered by position (ASC). Author only.
+- **`PATCH /quizzes/:quizId/questions/:id`** (#8): updates body/position/points. `requireOwnedQuestion` scopes findOne to `{ id, quizId }` — no cross-quiz access.
+- **`DELETE /quizzes/:quizId/questions/:id`** (#8): cascades to options/answers. Returns 204.
+- **`POST /quizzes/:quizId/questions/:id/options`** (#8): only valid for `SINGLE_CHOICE`, `MULTIPLE_CHOICE`, `TRUE_FALSE`. Throws 400 for `SHORT_TEXT`.
+- **`POST /quizzes/:quizId/questions/:id/answer-key`** (#8): sets correct answer by type — `optionIds` for choice types, `expectedAnswer.text` for short-text. Throws 400 on type mismatch.
+- **Ownership at service layer** (#8): `requireOwnedQuiz` / `requireOwnedQuestion` are the single enforcement points. Controllers contain no ownership logic. Non-owners receive 403, not 404.
+- **Unit tests** (#8): 39 new tests (29 service + 10 controller); 57/57 total.
 
 ---
 
