@@ -114,6 +114,7 @@ Rules:
 - tests must prove the actual claim, not just one happy path
 - docs/specs must be updated before requesting review when authority surfaces changed
 - PR body / primary artifact must carry the CDD Trace through step 7
+- **Bootstrap commit scope:** stage the bootstrap commit by explicit path only (`git add docs/<path>/` or equivalent) — never `git add -A` or `git add .` for bootstrap. Review `git status` before committing and verify the staged set contains only the intended version-directory files. Cache artifacts (`.vite/`, `dist/`, `node_modules/`), tool state files, and agent definition files are not source — a broad stage will include them silently. Before bulk-removing a directory from tracking (`git rm --cached -r <dir>/`), run `git ls-tree -r --name-only main | grep "^<dir>/"` to verify which files are already tracked on main.
 
 ### 2.3. Peer enumeration before closure claims
 
