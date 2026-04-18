@@ -181,6 +181,7 @@ Before requesting β, verify all of the following:
 3. tests are present, or explicit reason none apply
 4. every AC has evidence
 5. known debt is explicit
+5a. Tier skill classification verified: open SELF-COHERENCE.md (or PR body) and compare the Tier 2 skill list against CDD §4.4 canonical Tier 2 set (`coding, design-principles, ship, testing, documenting, process-economics, rca, follow-up, writing, skill`). Any skill outside that set does not belong in Tier 2 — move it to Tier 3 or remove it. Verify Tier 3 names match what the issue specified.
 6. schema / shape audit completed when contracts changed — for ORM entities: verify each `@Column` / `@PrimaryColumn` type annotation matches the corresponding migration SQL column type, not only that column names agree; inconsistency between decorators in the same entity family (e.g. `@PrimaryColumn({ type: 'uuid' })` vs `@Column({ name: '...' })` without type) is a schema drift finding
 7. peer enumeration completed when closure claim touches a family of surfaces
 8. harness audit completed when a schema-bearing contract changed
