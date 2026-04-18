@@ -85,8 +85,8 @@ export class QuizService {
         throw new BadRequestException(`Invalid status value: ${dto.status}`);
       }
       const newStatus = dto.status as QuizStatus;
-      if (quiz.status === QuizStatus.PUBLISHED && newStatus !== QuizStatus.PUBLISHED) {
-        throw new BadRequestException('Invalid status transition: published → draft');
+      if (quiz.status === QuizStatus.PUBLISHED) {
+        throw new BadRequestException('Invalid status transition: quiz is already published');
       }
       quiz.status = newStatus;
     }

@@ -178,11 +178,19 @@ describe('QuizService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('throws 400 for published → draft transition', async () => {
+    it('throws 400 for published → draft (terminal state)', async () => {
       mockQuizRepo.findOne.mockResolvedValue(makeQuiz({ status: QuizStatus.PUBLISHED }));
 
       await expect(
         service.updateQuiz(QUIZ_ID, OWNER_ID, { status: 'draft' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws 400 for published → published (terminal state)', async () => {
+      mockQuizRepo.findOne.mockResolvedValue(makeQuiz({ status: QuizStatus.PUBLISHED }));
+
+      await expect(
+        service.updateQuiz(QUIZ_ID, OWNER_ID, { status: 'published' }),
       ).rejects.toThrow(BadRequestException);
     });
 
