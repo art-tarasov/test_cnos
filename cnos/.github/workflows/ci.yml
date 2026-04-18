@@ -1,0 +1,216 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: src/go/go.sum
+
+      - name: Build
+        working-directory: src/go
+        run: go build ./...
+
+      - name: Build binary
+        working-directory: src/go
+        run: go build -o cn ./cmd/cn
+
+      - name: Test
+        working-directory: src/go
+        run: go test ./... -v
+
+      - name: Vet
+        working-directory: src/go
+        run: go vet ./...
+
+      - name: Dispatch boundary check (INVARIANTS.md T-002)
+        working-directory: src/go
+        run: |
+          VIOLATIONS=""
+          for f in internal/cli/cmd_*.go; do
+            [ -f "$f" ] || continue
+            case "$f" in *_test.go) continue;; esac
+            if grep -qE "^\s*\"(os|net/http|encoding/json|archive/|compress/|crypto/|path/filepath)\"" "$f"; then
+              VIOLATIONS="$VIOLATIONS\n  $f"
+            fi
+          done
+          if [ -n "$VIOLATIONS" ]; then
+            echo "❌ Dispatch boundary violation (INVARIANTS.md T-002, eng/go §2.18)"
+            echo -e "   Violations:$VIOLATIONS"
+            exit 1
+          fi
+          echo "✓ Dispatch boundary: all cmd_*.go files are thin wrappers"
+
+      - name: Smoke test
+        working-directory: src/go
+        run: |
+          ./cn help
+
+  kata-tier1:
+    runs-on: ubuntu-latest
+    needs: [go]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: src/go/go.sum
+
+      - name: Build binary
+        working-directory: src/go
+        run: go build -o ../../cn ./cmd/cn
+
+      - name: Configure git identity
+        # `cn doctor` checks git user.name / user.email. GitHub runners
+        # have no default identity — set one so the Tier 1 doctor kata
+        # sees a clean config.
+        run: |
+          git config --global user.name "ci"
+          git config --global user.email "ci@cnos.local"
+
+      - name: Run Tier 1 kata
+        run: |
+          export PATH="$PWD:$PATH"
+          scripts/kata/run-all.sh
+
+  kata-tier2:
+    runs-on: ubuntu-latest
+    needs: [kata-tier1]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: src/go/go.sum
+
+      - name: Build binary
+        working-directory: src/go
+        run: go build -o ../../cn ./cmd/cn
+
+      - name: Configure git identity
+        # Tier 2 creates hubs via `cn init`; several sub-kata exercise
+        # `cn doctor`, which requires a git user.name / user.email.
+        run: |
+          git config --global user.name "ci"
+          git config --global user.email "ci@cnos.local"
+
+      - name: Build packages
+        run: |
+          export PATH="$PWD:$PATH"
+          cn build
+
+      - name: Set up CI test hub (cnos.core + cnos.kata + cnos.cdd.kata)
+        run: |
+          export PATH="$PWD:$PATH"
+          # Extract real versions from package source — the only authority
+          # for what cn build just produced. Pre-#250 the lockfile dumped
+          # the full index, so a stale/wrong manifest still "worked"; now
+          # cn deps lock honors deps.json strictly, so the manifest must
+          # name versions that actually exist in the index.
+          version_of() {
+            grep -m1 '"version"' "src/packages/$1/cn.package.json" \
+              | sed -E 's/.*"version":[[:space:]]*"([^"]+)".*/\1/'
+          }
+          CORE_VER=$(version_of cnos.core)
+          KATA_VER=$(version_of cnos.kata)
+          CDDKATA_VER=$(version_of cnos.cdd.kata)
+          mkdir -p ci-tier2
+          cd ci-tier2
+          cn init ci-hub >/dev/null
+          cd cn-ci-hub
+          cn setup >/dev/null
+          cat > .cn/deps.json <<JSON
+          {
+            "schema": "cn.deps.v1",
+            "profile": "engineer",
+            "packages": [
+              {"name": "cnos.core", "version": "$CORE_VER"},
+              {"name": "cnos.kata", "version": "$KATA_VER"},
+              {"name": "cnos.cdd.kata", "version": "$CDDKATA_VER"}
+            ]
+          }
+          JSON
+          cn deps lock
+          cn deps restore
+
+      - name: Run Tier 2 kata
+        run: |
+          export PATH="$PWD:$PATH"
+          cd ci-tier2/cn-ci-hub
+          cn kata run --class runtime
+
+      - name: Framework command surface (kata-list, method dispatch, kata-judge)
+        # Per #251 review F3: Tier-2 must mechanically protect every new
+        # command surface against regression, not just `kata-run --class
+        # runtime`. This step asserts cross-package discovery, method
+        # dispatch with a corpus-only stub bundle, and judge output.
+        run: |
+          export PATH="$PWD:$PATH"
+          cd ci-tier2/cn-ci-hub
+          set -euo pipefail
+
+          echo "--- cn kata list ---"
+          LIST_OUT="$(cn kata list)"
+          echo "$LIST_OUT"
+          R_COUNT=$(echo "$LIST_OUT" | grep -cE '^\s+runtime\s+R[0-9]')
+          M_COUNT=$(echo "$LIST_OUT" | grep -cE '^\s+method\s+M[0-9]')
+          [ "$R_COUNT" -ge 4 ] || { echo "FAIL: kata-list found $R_COUNT runtime, expected >= 4"; exit 1; }
+          [ "$M_COUNT" -ge 5 ] || { echo "FAIL: kata-list found $M_COUNT method, expected >= 5"; exit 1; }
+          echo "PASS: kata-list discovered $R_COUNT runtime + $M_COUNT method across packages"
+
+          echo "--- cn kata run M0-gap --mode cdd (corpus-only stub path) ---"
+          cn kata run M0-gap --mode cdd
+          BUNDLE="$(ls -td .kata-runs/*-M0-gap-cdd | head -1)"
+          [ -n "$BUNDLE" ] && [ -f "$BUNDLE/metadata.json" ] \
+            || { echo "FAIL: no run bundle produced"; exit 1; }
+          grep -q '"status": "stub"' "$BUNDLE/metadata.json" \
+            || { echo "FAIL: metadata.json missing 'status: stub'"; cat "$BUNDLE/metadata.json"; exit 1; }
+          echo "PASS: method-kata stub path produced valid bundle ($BUNDLE)"
+
+          echo "--- cn kata judge <bundle> ---"
+          JUDGE_OUT="$(cn kata judge "$BUNDLE")"
+          echo "$JUDGE_OUT"
+          echo "$JUDGE_OUT" | grep -q '"verdict": "not-yet-implemented"' \
+            || { echo "FAIL: kata-judge missing honest-stub verdict"; exit 1; }
+          echo "PASS: kata-judge emitted honest-stub verdict"
+
+  notify:
+    needs: [go, kata-tier1, kata-tier2]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Telegram notification
+        env:
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+        run: |
+          if [ -z "$TG_BOT_TOKEN" ] || [ -z "$TG_CHAT_ID" ]; then exit 0; fi
+          STATUS="${{ needs.go.result }}"
+          K1="${{ needs.kata-tier1.result }}"
+          K2="${{ needs.kata-tier2.result }}"
+          if [ "$STATUS" = "success" ] && [ "$K1" = "success" ] && [ "$K2" = "success" ]; then
+            ICON="✅"
+          else
+            ICON="❌"
+            STATUS="$STATUS (kata1: $K1, kata2: $K2)"
+          fi
+          REF="${{ github.head_ref || github.ref_name }}"
+          MSG="$ICON CI $STATUS: ${{ github.repository }}@${REF}"
+          [ -n "${{ github.event.pull_request.number }}" ] && MSG="$MSG (PR #${{ github.event.pull_request.number }})"
+          curl -s -X POST "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TG_CHAT_ID}" -d text="${MSG}" -d disable_notification=true

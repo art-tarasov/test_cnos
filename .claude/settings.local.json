@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh issue *)",
+      "Bash(gh repo *)",
+      "Bash(git config *)",
+      "Bash(gh pr *)",
+      "Bash(git checkout *)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(npm test *)",
+      "Bash(git push *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git pull *)",
+      "Bash(git stash *)",
+      "Bash(git commit *)",
+      "Bash(xargs grep *)",
+      "Bash(git fetch *)",
+      "Bash(find apps *)",
+      "Bash(npm run *)",
+      "Bash(git remote *)"
+    ]
+  },
+  "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": 1
+}

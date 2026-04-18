@@ -1,0 +1,9 @@
+{
+  "schema": "cn.package.v1",
+  "name": "cnos.cdd.kata",
+  "version": "0.3.0",
+  "kind": "package",
+  "engines": {
+    "cnos": ">=3.54.0"
+  }
+}

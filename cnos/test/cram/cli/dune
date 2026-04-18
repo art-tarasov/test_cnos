@@ -1,0 +1,5 @@
+(cram
+ (deps
+  cn.sh
+  ../../../VERSION
+  %{bin:cn}))
