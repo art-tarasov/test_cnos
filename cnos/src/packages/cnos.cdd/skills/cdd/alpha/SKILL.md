@@ -205,6 +205,10 @@ Once the gate passes:
 
 When β approves: write α close-out (cycle findings or "no findings"). **Commit the close-out to main directly** (not on the PR branch) — squash-merge destroys branch-only files.
 
+**Canonical path:** `.cdd/releases/{version}/alpha/CLOSE-OUT.md`
+
+This step is **mandatory before notifying γ**. γ cannot close the cycle until both α and β close-outs exist on main. Do not summarise findings verbally and skip the commit — write the file and push.
+
 ---
 
 ## 3. Rules
