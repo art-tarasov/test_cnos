@@ -147,3 +147,14 @@ Did α push ambiguity onto β? No:
 **Note on `@nestjs/class-validator`:** The issue specifies `@nestjs/class-validator` in AC1. This package is the deprecated predecessor of the current `class-validator` package (split and unmaintained since 2020). The modern NestJS documentation, including official NestJS docs, recommends `class-validator` directly. This implementation uses `class-validator ^0.15.1` + `class-transformer ^0.5.1` per current NestJS convention. If γ intended a specific older package, β should flag this as a scope question.
 
 **No other known debt.**
+
+## Post-patch re-audit (RC fix commit)
+
+**Findings addressed:**
+- C1 (β): `apps/frontend/.vite/` cache files committed in bootstrap — removed from tracking; `.vite/` added to `.gitignore`.
+- C2 (β/Artem): `cnos/` subtree (unmodified by this cycle) committed in bootstrap — removed from tracking.
+- Additional: `.claude/settings.local.json` (local dev config) removed from tracking; added to `.gitignore`.
+- Additional: `.claude/agents/{alpha,beta,gamma}.md` contained stale per-cycle state (old PR numbers, issue numbers, RC status messages) — content reset to stable role prompts without cycle-specific state.
+- Over-delete recovery: `git rm --cached -r cnos/` also removed 4 skill stub files that were already tracked on `main`; restored via `git checkout main -- <files>`.
+
+**Re-audit scope:** Implementation files (`apps/backend/`, `.cdd/releases/0.5.0/`) unchanged. All 80 tests pass. `tsc --noEmit` clean. AC evidence rows above remain valid.
