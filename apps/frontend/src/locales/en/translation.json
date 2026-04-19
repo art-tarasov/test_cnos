@@ -1,0 +1,31 @@
+{
+  "auth": {
+    "login": {
+      "title": "Login",
+      "emailLabel": "Email",
+      "emailPlaceholder": "Enter your email",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "submitButton": "Login",
+      "registerLink": "Don't have an account? Register"
+    },
+    "register": {
+      "title": "Register",
+      "emailLabel": "Email",
+      "emailPlaceholder": "Enter your email",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "submitButton": "Register",
+      "loginLink": "Already have an account? Login"
+    },
+    "errors": {
+      "invalidCredentials": "Invalid email or password",
+      "emailTaken": "Email already registered",
+      "genericError": "An error occurred. Please try again."
+    }
+  },
+  "home": {
+    "welcome": "Welcome, {{email}}",
+    "logoutButton": "Logout"
+  }
+}
