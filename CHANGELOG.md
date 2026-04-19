@@ -4,11 +4,33 @@
 
 | Version | C_Σ | α | β | γ | Level | Coherence note |
 |---------|-----|---|---|---|-------|----------------|
+| 0.6.0 | A | A | A | — | L6 (cycle: L6) | Frontend foundation: React Router v6 with ROUTES const, Redux Toolkit store, RTK Query API layer with Zod validation, auth UI (register/login), home page (protected), i18n (English), Tailwind styling. Single source of truth for routes; JWT in localStorage; localStorage sync on hydration; password field on error not cleared (deferred). 19/19 tests pass. |
 | 0.5.0 | A- | A- | A | A- | L6 (cycle: L6) | Participation layer added: GET /quizzes/:id/participate, POST /quizzes/:id/attempts (scored), GET /quizzes/:id/attempts/:attemptId. DTO validation (class-validator + ValidationPipe) backfilled across all 8 existing request DTOs. Two C mechanical findings at review (F1: .vite/ cache committed; F2: stale per-cycle state in .claude/agents/ definitions). Both fixed in RC; .gitignore patched. 80/80 tests pass. |
 | 0.4.0 | A- | A- | A | A | L6 (cycle: L6) | Quiz authoring CRUD added: 10 endpoints (quizzes + questions + options + answer key), ownership at service layer, cascade delete via DB FK. Two findings at review (F1 C mechanical: PR body test count undercounted controller spec; F2 C judgment: published→published not blocked — AC3 terminal state not enforced). Both fixed in RC; published now terminal, 57/57 tests pass. |
 | 0.3.0 | A- | A- | A | A- | L6 (cycle: L6) | Auth layer added: JWT registration + login, JwtAuthGuard and @CurrentUser() for future controllers. Two findings at review (F1 C mechanical: Tier classification cross-surface conflict in SELF-COHERENCE.md; F2 B judgment: dead test setup). Both fixed in RC. γ dispatch had transposed PR/issue numbers. |
 | 0.2.0 | A- | A- | A | A | L6 (cycle: L6) | Persistence layer established: TypeORM + PostgreSQL, six entities in 4NF, initial migration, health endpoint extended. Four mechanical findings (3B, 1A) reached review — FK type annotation drift, bootstrap ordering, CLI env var consistency, README omission. |
 | 0.1.0 | A- | A- | A | A- | L6 | First application skeleton: NestJS backend + React/Vite frontend exist and are locally runnable. Monorepo workspace wiring established. PR template surface was corrected (F1: instance content in template file). |
+
+---
+
+## 0.6.0 — 2026-04-19
+
+### Added
+
+- **`react-router-dom` v6** (#12): Route navigation via `<BrowserRouter>` and `<Routes>`. Path constants in `src/constants/routes.ts` (ROUTES.HOME, ROUTES.LOGIN, ROUTES.REGISTER). No hardcoded path strings anywhere.
+- **Redux store with Redux Toolkit** (#12): `configureStore` with authSlice and authApi. Type exports (`RootState`, `AppDispatch`). Provider wraps app root in `main.tsx`.
+- **RTK Query API layer with Zod validation** (#12): `authApi` with `register` and `login` mutations. Zod schemas (`registerResponseSchema`, `loginResponseSchema`) enforced at `transformResponse` boundary. Types via `z.infer<>` (TRegisterResponse, TLoginResponse). No manual response types.
+- **Auth state slice** (#12): `authSlice` with `IAuthState` (user, token). Actions: `setCredentials`, `clearCredentials`. Both persist to/restore from localStorage (USER_KEY, TOKEN_KEY). `loadFromStorage` hydration at store init.
+- **Register page** (#12): Form at `ROUTES.REGISTER`. Calls `useRegisterMutation`. Success → navigate to `ROUTES.LOGIN`. 409 error → `t('auth.errors.emailTaken')`. Tailwind styled.
+- **Login page** (#12): Form at `ROUTES.LOGIN`. Calls `useLoginMutation`. JWT decoded via `decodeJwtPayload` (Zod-validated). Success → `dispatch(setCredentials(...))` → navigate to `ROUTES.HOME`. 401 error → `t('auth.errors.invalidCredentials')`. Tailwind styled.
+- **Home page (auth-protected)** (#12): Displays translated "Welcome, {email}". Logout button → `dispatch(clearCredentials())` → navigate to `ROUTES.LOGIN`. Protected by `ProtectedRoute` — unauthenticated access → redirect to `ROUTES.LOGIN`.
+- **ProtectedRoute component** (#12): Checks Redux `auth.token`. If null, returns `<Navigate to={ROUTES.LOGIN}>`. Otherwise renders children.
+- **i18n (English)** (#12): i18next + react-i18next configured in `src/i18n.ts`. Translations at `src/locales/en/translation.json` with structure: `auth.login.*`, `auth.register.*`, `auth.errors.*`, `home.*`. All user-visible strings (labels, placeholders, error messages, button text) via `t()` hook.
+- **Tailwind CSS** (#12): `tailwind.config.js` content covers `./src/**/*.{ts,tsx}`. All pages styled with utility classes. `index.css` imports Tailwind base only. No separate CSS files.
+- **JWT utility** (#12): `src/utils/jwt.ts` exports `decodeJwtPayload(token)` with Zod validation. Validates token format (3 parts) and payload shape (sub, email, role). Throws on invalid format or schema violation.
+- **Environment configuration** (#12): `VITE_API_URL` env var used by RTK Query `baseQuery`. `.env.example` documents VITE_API_URL with default `http://localhost:3000`.
+- **Type safety** (#12): `tsconfig.json` strict: true. No `any` type. All response types via `z.infer<>`. Naming conventions enforced: IAuthState (interface for Redux), TRegisterResponse/TLoginResponse (T prefix for Zod-inferred), ROUTES (const).
+- **Unit tests** (#12): 19 tests across 4 suites — authApi.schemas (8: register/login schema validation), authSlice (5: setCredentials/clearCredentials persistence), jwt (4: token decode, format, schema), ProtectedRoute (2: authenticated/unauthenticated rendering). All pass.
 
 ---
 
