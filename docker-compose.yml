@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: myquiz
+      POSTGRES_PASSWORD: myquiz
+      POSTGRES_DB: myquiz
+    ports:
+      - "5432:5432"
+    volumes:
+      - myquiz_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myquiz -d myquiz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  myquiz_pgdata:

@@ -28,8 +28,8 @@ Developers required a local PostgreSQL installation to work on myquiz. No contai
 - [x] AC3: Health-check declared using `pg_isready -U myquiz -d myquiz`.
 - [x] AC4: `apps/backend/.env.example` updated with comment clarifying `DB_HOST=localhost` refers to Docker-exposed port.
 - [x] AC5: Root `README.md` has "Dev database" section with `docker compose up -d db` (start) and `docker compose stop db` (stop), plus `.env.example` → `.env` note.
-- [x] AC6: `docker-compose.yml` is NOT in `.gitignore`. Verified: `grep docker-compose .gitignore` returns no match.
-- [x] AC7: `tsc --noEmit` passes for backend — no TypeScript changes made; verified clean.
+- [x] AC6: `docker-compose.yml` is NOT in `.gitignore`. Verified: `grep docker-compose .gitignore` → no match.
+- [x] AC7: `tsc --noEmit` passes for backend. Verified: `cd apps/backend && npx tsc --noEmit` → exit 0, no output.
 
 ## Triadic Self-Check
 
