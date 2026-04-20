@@ -16,7 +16,29 @@ docs/         Cycle snapshots and process artifacts
 
 - Node.js 20+
 - npm 9+ (workspace support required)
-- PostgreSQL 13+ (for backend)
+- Docker (for the dev database; see Dev database below)
+
+## Dev database
+
+Start the PostgreSQL 16 service:
+
+```bash
+docker compose up -d db
+```
+
+Stop it:
+
+```bash
+docker compose stop db
+```
+
+Copy the example env file for the backend before running migrations or the server:
+
+```bash
+cp apps/backend/.env.example apps/backend/.env
+```
+
+The defaults in `.env.example` match the Docker service credentials — no edits required for local development.
 
 ## Install
 
@@ -32,14 +54,9 @@ This installs dependencies for all workspaces (backend and frontend) via npm wor
 
 ### Backend
 
-Copy and fill in the environment file:
+Start the dev database and copy the env file first (see [Dev database](#dev-database) above).
 
-```bash
-cp apps/backend/.env.example apps/backend/.env
-# edit apps/backend/.env with your local Postgres credentials
-```
-
-Run database migrations (requires a running Postgres instance):
+Run database migrations:
 
 ```bash
 cd apps/backend
