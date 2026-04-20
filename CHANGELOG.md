@@ -4,12 +4,26 @@
 
 | Version | C_Σ | α | β | γ | Level | Coherence note |
 |---------|-----|---|---|---|-------|----------------|
+| 0.7.0 | A | A | A | A | L6 (cycle: L6) | Docker Compose dev database: PostgreSQL 16 service with named volume, health-check, credentials matched to .env.example, README guidance. Zero review findings. Per-machine setup friction eliminated. |
 | 0.6.0 | A | A | A | — | L6 (cycle: L6) | Frontend foundation: React Router v6 with ROUTES const, Redux Toolkit store, RTK Query API layer with Zod validation, auth UI (register/login), home page (protected), i18n (English), Tailwind styling. Single source of truth for routes; JWT in localStorage; localStorage sync on hydration; password field on error not cleared (deferred). 19/19 tests pass. |
 | 0.5.0 | A- | A- | A | A- | L6 (cycle: L6) | Participation layer added: GET /quizzes/:id/participate, POST /quizzes/:id/attempts (scored), GET /quizzes/:id/attempts/:attemptId. DTO validation (class-validator + ValidationPipe) backfilled across all 8 existing request DTOs. Two C mechanical findings at review (F1: .vite/ cache committed; F2: stale per-cycle state in .claude/agents/ definitions). Both fixed in RC; .gitignore patched. 80/80 tests pass. |
 | 0.4.0 | A- | A- | A | A | L6 (cycle: L6) | Quiz authoring CRUD added: 10 endpoints (quizzes + questions + options + answer key), ownership at service layer, cascade delete via DB FK. Two findings at review (F1 C mechanical: PR body test count undercounted controller spec; F2 C judgment: published→published not blocked — AC3 terminal state not enforced). Both fixed in RC; published now terminal, 57/57 tests pass. |
 | 0.3.0 | A- | A- | A | A- | L6 (cycle: L6) | Auth layer added: JWT registration + login, JwtAuthGuard and @CurrentUser() for future controllers. Two findings at review (F1 C mechanical: Tier classification cross-surface conflict in SELF-COHERENCE.md; F2 B judgment: dead test setup). Both fixed in RC. γ dispatch had transposed PR/issue numbers. |
 | 0.2.0 | A- | A- | A | A | L6 (cycle: L6) | Persistence layer established: TypeORM + PostgreSQL, six entities in 4NF, initial migration, health endpoint extended. Four mechanical findings (3B, 1A) reached review — FK type annotation drift, bootstrap ordering, CLI env var consistency, README omission. |
 | 0.1.0 | A- | A- | A | A- | L6 | First application skeleton: NestJS backend + React/Vite frontend exist and are locally runnable. Monorepo workspace wiring established. PR template surface was corrected (F1: instance content in template file). |
+
+---
+
+## 0.7.0 — 2026-04-20
+
+### Added
+
+- **Docker Compose dev database** (#15): PostgreSQL 16 service at root `docker-compose.yml` with credentials (myquiz/myquiz/myquiz) matching `.env.example` exactly. Named volume `myquiz_pgdata` persists data across compose cycles. Health-check via `pg_isready -U myquiz -d myquiz` allows dependent tooling to wait for readiness. Port 5432 host-mapped.
+- **README Dev database section** (#15): Clear instructions: `docker compose up -d db` (start), `docker compose stop db` (stop), copy `.env.example` → `.env` (no edits required for local development).
+
+### Changed
+
+- **Backend dependency list** (#15): Replaced manual PostgreSQL 13+ installation requirement with Docker-based dev database. Simplifies onboarding, eliminates per-machine version drift.
 
 ---
 
